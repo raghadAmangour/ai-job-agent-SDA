@@ -95,11 +95,9 @@ Each phase has a different responsibility.
 
 ## Phase 1 — Job Data Preparation
 
-Phase 1 is responsible for preparing the job database.
+Phase 1 is responsible for preparing the job corpus used by the application.
 
-It is **not executed inside the Streamlit application**.
-
-The prepared data is stored in:
+It is **not executed inside the Streamlit application**. Instead, the corpus is prepared offline and the resulting application-consumed files are stored in:
 
 ```text
 data/
@@ -109,11 +107,67 @@ data/
 └── skill_vocabulary.parquet
 ```
 
-The current dataset contains approximately **9,619 job postings**.
+The current Phase 1 dataset contains:
 
-The application uses these precomputed files instead of rebuilding the entire job dataset every time a candidate runs an analysis.
+* **9,619 job postings**
+* **57 columns**
+* **1,536-dimensional job embeddings**
+* **35,890 skills in the normalized skill vocabulary**
+* **100% successful structured extraction in the current run**
 
-To update the dataset, Phase 1 can be run separately and the generated files can then replace the files inside `data/`.
+Phase 1 is independent of any **individual candidate or user query**. It uses multiple fixed job-search anchors to build a broad, reusable job corpus across different domains.
+
+The pipeline is:
+
+```text
+Multi-anchor fetch
+        ↓
+Text normalization
+        ↓
+Language detection
+        ↓
+Spam / aggregator filtering
+        ↓
+Exact + content duplicate removal
+        ↓
+Near-duplicate detection
+        ↓
+Location normalization
+        ↓
+Date / freshness handling
+        ↓
+Quality gate
+        ↓
+LLM structured extraction
+        ↓
+Skill normalization
+        ↓
+Quality assurance
+        ↓
+Final dataset + embeddings
+```
+
+The Phase 1 notebook uses multiple anchors covering areas such as:
+
+* Data / technology
+* Business / operations
+* Engineering and other professional domains
+
+The prepared corpus includes normalized job text, structured job attributes, normalized skills, location information, employment information, experience and education fields, and other features used by later phases.
+
+The job embeddings are stored separately from the structured job data and are aligned with `job_ids.npy`.
+
+Phase 1 also generates supporting files for quality review and reproducibility:
+
+```text
+rejected_jobs.parquet
+run_metadata.json
+DATA_DICTIONARY.md
+```
+
+These supporting files document rejected records, run configuration and counts, and the prepared dataset schema.
+
+To update the job corpus, Phase 1 can be run separately and the application-consumed files can then replace the corresponding files inside `data/`.
 
 ---
 
@@ -416,9 +470,11 @@ The project combines several technologies:
 
 # 📊 Current Job Dataset
 
-The application currently uses a prepared dataset containing approximately:
+The application currently uses a prepared Phase 1 dataset containing:
 
 **9,619 job postings**
+
+The dataset contains **57 columns**, with **1,536-dimensional precomputed embeddings** and a **35,890-entry normalized skill vocabulary**.
 
 The job database and embeddings are generated during the offline data preparation stage and are then consumed by the Streamlit application.
 
@@ -463,7 +519,6 @@ The goal of AI Job Agent is to provide a more structured job-search experience b
 **Semantic understanding + explicit user preferences + explainable matching + conversational AI**
 
 Instead of simply returning jobs that contain similar keywords, the system creates a multi-stage matching process that considers both the candidate's background and their stated preferences.
-
 
 ---
 

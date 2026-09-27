@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import streamlit as st
+from PIL import Image
 
 from src import config
 from src.resume_reader import read_resume, resume_quality_check
@@ -35,9 +36,16 @@ from src.phase8_agent import (
 # Page configuration
 # ---------------------------------------------------------------------------
 
+LOGO_PATH = "assets/logo.png"
+
+try:
+    page_icon = Image.open(LOGO_PATH)
+except Exception:
+    page_icon = "🧭"
+
 st.set_page_config(
-    page_title="AI Job Agent",
-    page_icon="🧭",
+    page_title="Masar — AI Job Agent",
+    page_icon=page_icon,
     layout="wide",
 )
 
@@ -202,12 +210,54 @@ final_top_n = st.sidebar.slider(
     10,
 )
 
+st.sidebar.markdown("---")
+
+with st.sidebar.expander("📊 About the Job Dataset"):
+
+    st.markdown(
+        """
+        Masar is powered by a database of over **9,600 real job postings**.
+
+        Each job has already been analyzed by AI to understand its
+        requirements in detail, matched against a library of more than
+        **35,000 standardized skills**.
+
+        This preparation is done in advance (offline), so the app stays
+        fast when you use it — it only needs to focus on analyzing
+        your resume.
+        """
+    )
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    """
+    <div style="text-align: center; font-size: 0.8rem; opacity: 0.8;">
+        © 2026 Masar Assistant<br><br>
+        Developed by<br>
+        Raghad Almangour<br>
+        Rawan Alotaibi<br>
+        Atheer Alzaedi<br>
+        Gori Alwabel<br><br>
+        Powered by AI Technology
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # ---------------------------------------------------------------------------
 # Main — resume upload + analysis
 # ---------------------------------------------------------------------------
 
-st.title("🧭 AI Job Agent")
+col_logo, col_title = st.columns([1, 6])
+
+with col_logo:
+    st.image(LOGO_PATH, width=80)
+
+with col_title:
+    st.title("Masar")
+    st.caption("AI Job Agent")
 
 st.caption(
     "Upload your resume and get personalized job matches "
@@ -895,9 +945,30 @@ with tab_chat:
         )
 
 
-        st.caption(
-            f"Messages remaining in this session: {remaining}"
+        col_remaining, col_clear = st.columns(
+            [4, 1]
         )
+
+        with col_remaining:
+
+            st.caption(
+                f"Messages remaining in this session: {remaining}"
+            )
+
+        with col_clear:
+
+            if st.button(
+                "🗑️ Clear Chat History",
+                use_container_width=True,
+            ):
+
+                st.session_state["chat_history"] = []
+
+                st.session_state["chat_display"] = []
+
+                st.session_state["chat_turns"] = 0
+
+                st.rerun()
 
 
         user_msg = st.chat_input(
@@ -1028,4 +1099,3 @@ with tab_chat:
                             0,
                         ) + 1
                     )
-

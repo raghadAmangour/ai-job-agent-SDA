@@ -34,13 +34,30 @@ RANKING_CRITERIA = [
 PHASE6_POOL_SIZE = 50
 
 # ---- Phase 6: cross-encoder reranking ----
-RERANKER_MODEL = "Alibaba-NLP/gte-multilingual-reranker-base"
-RERANKER_MODEL_REVISION = "8215cf04918ba6f7b6a62bb44238ce2953d8831c"
-RERANKER_CODE_REVISION = "40ced75c3017eb27626c9d4ea981bde21a2662f4"
-RERANKER_TRUST_REMOTE_CODE = True
+# Switched from Alibaba-NLP/gte-multilingual-reranker-base (~306M params,
+# multilingual, requires trust_remote_code) to cross-encoder/ms-marco-MiniLM-L-6-v2
+# (~22M params, English-only) since the app's resume/job text is English-only.
+# Much lighter to download and run on Streamlit Cloud's free CPU tier.
+# No trust_remote_code / custom code_revision needed for this model.
+RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+RERANKER_MODEL_REVISION = "d3c87ff86d02a312dc895fff50a815f5aaaee56b"
+RERANKER_CODE_REVISION = None
+RERANKER_TRUST_REMOTE_CODE = False
 FINAL_TOP_N = 20
 INITIAL_BATCH_SIZE = 8
-MAX_PAIR_TOKENS = 2048
+# ms-marco-MiniLM-L-6-v2 has max_position_embeddings=512 (covers query+passage
+# together). 2048 was fine for the previous larger model but overflows this
+# one's position embeddings, so it's capped here to match.
+MAX_PAIR_TOKENS = 512
+# Manual, deterministic word caps applied to the long free-text fields before
+# they reach the tokenizer, so truncation always drops the tail of a long
+# job description / responsibilities / summary — never the short structured
+# fields (skills, title, experience, education) built earlier in the text.
+# ~130 words ≈ 512 tokens total once split across both sides of the pair
+# plus the structured sections, with headroom to spare.
+JOB_DESCRIPTION_MAX_WORDS = 150
+RESPONSIBILITIES_MAX_WORDS = 60
+CANDIDATE_SUMMARY_MAX_WORDS = 60
 PII_FIELDS = ["full_name", "email", "phone", "source_file"]
 
 # ---- Phase 7 / 8: LLM explanations + agent ----

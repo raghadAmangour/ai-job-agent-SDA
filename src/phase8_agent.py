@@ -168,15 +168,17 @@ def run_tool_call(tool_functions: dict, name: str, arguments: dict) -> dict:
 
 
 def ask_agent(client, user_message: str, history: list, tool_functions: dict,
-              tools_schema: list, system_prompt: str) -> tuple:
+              tools_schema: list, system_prompt: str, usage_state: dict = None) -> tuple:
     """One conversational turn. Returns (assistant_text, updated_history, tool_calls_made)."""
     history = history + [{"role": "user", "content": user_message}]
     tool_calls_made = []
+    from .usage_tracker import track_llm
 
     for _ in range(config.MAX_TOOL_ITERATIONS):
         response = client.responses.create(
             model=config.AGENT_MODEL, instructions=system_prompt, input=history, tools=tools_schema,
         )
+        track_llm(usage_state, response, "phase8_chat")
         function_calls = [item for item in response.output if item.type == "function_call"]
 
         if not function_calls:

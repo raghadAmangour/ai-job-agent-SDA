@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd
-import streamlit as st
 
 from . import config
 from .phase5_matching import cell_values
@@ -76,11 +75,9 @@ def build_job_text(row: pd.Series) -> str:
     return "\n".join(s for s in sections if s)
 
 
-@st.cache_resource(show_spinner="Loading re-ranking model...")
 def load_reranker():
-    """Loads the pinned multilingual cross-encoder. Cached via
-    st.cache_resource so the model is loaded once per app instance and
-    shared across sessions, instead of being reloaded on every rerun."""
+    """Loads the pinned multilingual cross-encoder. Call this once via
+    st.cache_resource in app.py — NOT per request."""
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 

@@ -163,12 +163,13 @@ work_arrangement_preference = st.sidebar.selectbox(
 employment_type_preference = st.sidebar.selectbox(
     "Employment type",
     [
+        "Not Specified",
         "Full-time",
         "Part-time",
         "Contract",
         "Internship",
         "Temporary",
-        "Not Specified",
+        
     ],
 )
 

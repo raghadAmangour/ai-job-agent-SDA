@@ -30,6 +30,7 @@ from src.phase8_agent import (
     check_grounding,
     SYSTEM_PROMPT_TEMPLATE,
 )
+from src.usage_tracker import new_usage_state, estimate_cost_usd, total_tokens
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +170,7 @@ employment_type_preference = st.sidebar.selectbox(
         "Contract",
         "Internship",
         "Temporary",
-        
+
     ],
 )
 
@@ -379,6 +380,10 @@ with tab_match:
             text="Reading your resume...",
         )
 
+        # Token/cost tracker for THIS run only (per-session, not shared
+        # between users — see src/usage_tracker.py)
+        usage_state = new_usage_state()
+
 
         # -------------------------------------------------------------------
         # Save uploaded resume temporarily
@@ -443,6 +448,7 @@ with tab_match:
                     uploaded_resume.name,
                     raw_text,
                     preferences,
+                    usage_state,
                 )
             )
 
@@ -637,6 +643,7 @@ with tab_match:
             explained_jobs = explain_jobs(
                 client,
                 phase6_payload["jobs"],
+                usage_state=usage_state,
             )
 
         except Exception as exc:
@@ -735,6 +742,8 @@ with tab_match:
 
         st.session_state["chat_turns"] = 0
 
+        st.session_state["usage_state"] = usage_state
+
 
     # -----------------------------------------------------------------------
     # Display results
@@ -755,6 +764,52 @@ with tab_match:
             f"Found {len(jobs)} suitable jobs "
             f"for {profile.get('most_recent_title', 'your profile')}."
         )
+
+        # ---------------------------------------------------------------
+        # Token usage / cost — this is where the output lives.
+        # Click the expander below to open it.
+        # ---------------------------------------------------------------
+        run_usage = st.session_state.get("usage_state")
+
+        if run_usage:
+
+            run_cost = estimate_cost_usd(
+                run_usage,
+                config.EMBEDDING_MODEL,
+                config.EXTRACTION_MODEL,
+            )
+
+            with st.expander("📊 Token Usage", expanded=False):
+
+                u1, u2, u3, u4 = st.columns(4)
+
+                u1.metric(
+                    "LLM Input Tokens",
+                    f"{run_usage['llm_input_tokens']:,}",
+                )
+
+                u2.metric(
+                    "LLM Output Tokens",
+                    f"{run_usage['llm_output_tokens']:,}",
+                )
+
+                u3.metric(
+                    "Embedding Tokens",
+                    f"{run_usage['embedding_tokens']:,}",
+                )
+
+                u4.metric(
+                    "Total Tokens",
+                    f"{total_tokens(run_usage):,}",
+                )
+
+                st.caption(
+                    f"Calls per phase: {run_usage['calls']} — "
+                    f"Estimated cost: ${run_cost:.4f} "
+                    f"(official {config.EXTRACTION_MODEL} short-context "
+                    f"pricing: $0.20 / $1.20 per 1M input/output tokens, "
+                    f"{config.EMBEDDING_MODEL}: $0.02 per 1M tokens)."
+                )
 
 
         with st.expander(
@@ -808,6 +863,12 @@ with tab_match:
                 st.write(
                     job["why_match"]
                 )
+
+                if job.get("low_score_note"):
+
+                    st.caption(
+                        f"ℹ️ {job['low_score_note']}"
+                    )
 
 
                 c1, c2 = st.columns(
@@ -1048,6 +1109,9 @@ with tab_chat:
                                 tool_functions,
                                 tools_schema,
                                 system_prompt,
+                                usage_state=st.session_state.get(
+                                    "usage_state"
+                                ),
                             )
 
 

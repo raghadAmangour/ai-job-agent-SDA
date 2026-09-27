@@ -102,7 +102,7 @@ def _normalize_items(items):
     return {str(item).strip().lower() for item in items}
 
 
-def explain_job(client, phase6_job: dict) -> dict:
+def explain_job(client, phase6_job: dict, usage_state: dict = None) -> dict:
     """Generate + validate one job's explanation. Raises AssertionError if the
     LLM introduces evidence not present in the Phase 6 data (same as notebook)."""
     evidence = evidence_from_phase6_job(phase6_job)
@@ -113,6 +113,8 @@ def explain_job(client, phase6_job: dict) -> dict:
         input=build_job_prompt(evidence),
         text_format=JobExplanation,
     )
+    from .usage_tracker import track_llm
+    track_llm(usage_state, response, "phase7_explain")
     out = response.output_parsed
 
     assert out.job_id == evidence["job_id"], "job_id was changed by the LLM."
@@ -126,6 +128,16 @@ def explain_job(client, phase6_job: dict) -> dict:
 
     learning_areas = learning_areas_for(evidence["missing_core_skills"])
 
+    low_score_note = None
+    n_required = len(evidence["matched_core_skills"]) + len(evidence["missing_core_skills"])
+    if phase6_job["match_score"] < 40 and n_required > 15:
+        low_score_note = (
+            "Note: this job lists an unusually large number of required "
+            f"skills ({n_required}), which lowers the match percentage even "
+            "for a well-qualified candidate. Treat this score as relative to "
+            "other jobs, not an absolute measure of fit."
+        )
+
     return {
         "job_id": phase6_job["job_id"], "title": phase6_job["title"], "company": phase6_job["company"],
         "url": phase6_job.get("url"), "location": phase6_job["location"],
@@ -133,15 +145,15 @@ def explain_job(client, phase6_job: dict) -> dict:
         "why_match": out.why_match, "matched_skills": out.matched_skills, "missing_skills": out.missing_skills,
         "matched_qualifications": out.matched_qualifications, "missing_qualifications": out.missing_qualifications,
         "matched_education": out.matched_education, "missing_education": out.missing_education,
-        "learning_areas": learning_areas,
+        "learning_areas": learning_areas, "low_score_note": low_score_note,
     }
 
 
-def explain_jobs(client, phase6_jobs: list, progress_callback=None) -> list:
+def explain_jobs(client, phase6_jobs: list, progress_callback=None, usage_state: dict = None) -> list:
     """Explain every job in the Phase 6 top-N list, one LLM call each."""
     outputs = []
     for i, job in enumerate(phase6_jobs):
-        outputs.append(explain_job(client, job))
+        outputs.append(explain_job(client, job, usage_state))
         if progress_callback:
             progress_callback(i + 1, len(phase6_jobs))
     return outputs

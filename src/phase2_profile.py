@@ -119,7 +119,7 @@ OTHER
 """
 
 
-def extract_resume_features(client, resume_text: str) -> dict:
+def extract_resume_features(client, resume_text: str, usage_state: dict = None) -> dict:
     """Synchronous single-resume extraction with retry/backoff, mirroring
     Phase 2's extract_one() (minus the cache/semaphore, unneeded for one call)."""
     from .shared import smart_truncate
@@ -138,6 +138,8 @@ def extract_resume_features(client, resume_text: str) -> dict:
                 ],
                 text_format=ResumeExtraction,
             )
+            from .usage_tracker import track_llm
+            track_llm(usage_state, response, "phase2_extraction")
             return response.output_parsed.model_dump()
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
@@ -148,9 +150,11 @@ def extract_resume_features(client, resume_text: str) -> dict:
     raise RuntimeError(f"Resume extraction failed: {last_exc}")
 
 
-def embed_texts(client, texts: list) -> np.ndarray:
+def embed_texts(client, texts: list, usage_state: dict = None) -> np.ndarray:
     """Batch embed via OpenAI embeddings API — same model as job_embeddings.npy."""
     response = client.embeddings.create(model=config.EMBEDDING_MODEL, input=texts)
+    from .usage_tracker import track_embedding
+    track_embedding(usage_state, response)
     vecs = np.array([d.embedding for d in response.data], dtype=np.float32)
     norms = np.linalg.norm(vecs, axis=1, keepdims=True)
     norms[norms == 0] = 1.0
@@ -172,13 +176,13 @@ def build_embedding_text(row: dict) -> str:
 
 
 def build_candidate_profile(client, resume_name: str, resume_raw_text: str,
-                             preferences: dict) -> tuple:
+                             preferences: dict, usage_state: dict = None) -> tuple:
     """Full Phase 2 PATH B pipeline for one resume. Returns
     (candidate_profile: dict, embedding: np.ndarray[1536])."""
     resume_clean = clean_text(resume_raw_text, keep_newlines=True)
     candidate_id = make_candidate_id(f"{resume_name}|{datetime.now(timezone.utc).isoformat()}")
 
-    features = extract_resume_features(client, resume_clean)
+    features = extract_resume_features(client, resume_clean, usage_state)
 
     normalized = {
         f"{field}_norm": normalize_skill_list(features.get(field, []))
@@ -206,7 +210,7 @@ def build_candidate_profile(client, resume_name: str, resume_raw_text: str,
         "all_skills_norm": candidate_profile["all_skills_norm"],
         "industries": candidate_profile.get("industries") or [],
     })
-    vector = embed_texts(client, [embedding_text])[0]
+    vector = embed_texts(client, [embedding_text], usage_state)[0]
 
     return candidate_profile, vector.astype(np.float32)
 

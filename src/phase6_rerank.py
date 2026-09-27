@@ -20,6 +20,24 @@ def text_section(label: str, value) -> str:
     return f"{label}: {', '.join(values)}" if values else ""
 
 
+def truncate_words(value, max_words: int) -> str:
+    """Deterministically caps a long free-text field at max_words, appending
+    '...' if cut. Used instead of letting the tokenizer silently truncate
+    wherever it lands — this way only the tail of long prose fields (full
+    job description, responsibilities) is ever dropped, never the short
+    structured fields (skills, title, experience, education) built above.
+    Handles both plain strings and list-like values (via cell_values) so a
+    responsibilities field stored as a list doesn't get str()'d into
+    bracket/quote noise."""
+    text = ", ".join(cell_values(value))
+    if not text:
+        return ""
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]) + " ..."
+
+
 def redact_pii(text: str, profile: dict) -> str:
     redacted = text
     for field in PII_FIELDS:
@@ -43,7 +61,8 @@ def build_candidate_text(profile: dict) -> str:
         text_section("Education level", profile.get("education_level")),
         text_section("Education fields", profile.get("education_field")),
         text_section("Professional qualifications", profile.get("qualifications")),
-        text_section("Professional summary", profile.get("summary")),
+        text_section("Professional summary",
+                     truncate_words(profile.get("summary"), config.CANDIDATE_SUMMARY_MAX_WORDS)),
     ]
     return redact_pii("\n".join(s for s in sections if s), profile)
 
@@ -69,8 +88,10 @@ def build_job_text(row: pd.Series) -> str:
         text_section("Education level", row.get("education_level")),
         text_section("Education fields", row.get("education_field")),
         text_section("Qualifications", row.get("qualifications")),
-        text_section("Responsibilities", row.get("responsibilities")),
-        text_section("Full job description", row.get("jd_clean")),
+        text_section("Responsibilities",
+                     truncate_words(row.get("responsibilities"), config.RESPONSIBILITIES_MAX_WORDS)),
+        text_section("Full job description",
+                     truncate_words(row.get("jd_clean"), config.JOB_DESCRIPTION_MAX_WORDS)),
     ]
     return "\n".join(s for s in sections if s)
 

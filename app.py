@@ -200,9 +200,22 @@ salary_currency = st.sidebar.text_input(
 
 st.sidebar.markdown("---")
 
+# NOTE: defaulted to False for demo stability — Phase 6 (semantic reranking)
+# loads a torch/transformers cross-encoder model, which is heavy for
+# Streamlit Community Cloud's free CPU tier and can trigger the platform's
+# CPU throttle / makes cold starts much slower after the app sleeps. The
+# phase is still fully implemented (src/phase6_rerank.py) and documented in
+# the write-up — it's just off by default here so the live demo stays fast
+# and reliable. Check this box to demonstrate it live if resources allow.
 use_reranker = st.sidebar.checkbox(
     "Use semantic reranking",
-    value=True,
+    value=False,
+    help=(
+        "Re-ranks the top matches with an AI cross-encoder model for finer "
+        "context understanding. Off by default in this demo to keep the "
+        "app fast and avoid Streamlit Cloud's free-tier CPU limits — the "
+        "underlying matching (Phase 5) is unaffected either way."
+    ),
 )
 
 final_top_n = st.sidebar.slider(

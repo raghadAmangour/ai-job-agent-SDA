@@ -19,11 +19,19 @@ def make_tools(jobs_by_id: dict, browse_pool):
                 "message": f"No job found with id {job_id} in the loaded results."}
 
     def list_top_jobs(limit: int = 10):
-        jobs = sorted(jobs_by_id.values(), key=lambda j: j.get("match_score", 0), reverse=True)
+        jobs = list(jobs_by_id.values())
         limit = max(1, min(limit, len(jobs)))
-        return [{"job_id": j["job_id"], "title": j["title"], "company": j["company"],
-                  "city": (j.get("location") or {}).get("city"), "match_score": j["match_score"]}
-                 for j in jobs[:limit]]
+        return [
+            {
+                "job_id": j["job_id"],
+                "title": j["title"],
+                "company": j["company"],
+                "city": (j.get("location") or {}).get("city"),
+                "match_score": j["match_score"],
+                "phase6_rank": j.get("phase6_rank"),
+            }
+            for j in jobs[:limit]
+        ]
 
     def get_job_explanation(job_id: str):
         return jobs_by_id.get(job_id) or _job_not_found(job_id)
@@ -96,7 +104,7 @@ def make_tools(jobs_by_id: dict, browse_pool):
 
     tools_schema = [
         {"type": "function", "name": "list_top_jobs",
-         "description": "Top matching jobs for the candidate, sorted by match score. Use this for general questions like 'what's my best job?'.",
+         "description": "Top matching jobs for the candidate in the final ranking order. Use this for general questions like 'what are my top matching jobs?' or 'what's my best job?'.",
          "parameters": {"type": "object", "properties": {
              "limit": {"type": "integer", "description": "Number of jobs to return", "default": 10}}, "required": []}},
         {"type": "function", "name": "get_job_explanation",

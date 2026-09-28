@@ -58,6 +58,17 @@ Strict grounding rules:
 - Do not infer an experience gap unless explicit evidence for it is provided.
 
 If information is not available in the evidence, do not fabricate it.
+
+Writing style for the "why_match" text (it is shown directly to the candidate):
+
+- Write to the candidate in the second person ("you", "your profile"),
+  in 2-3 clear sentences.
+- Never use internal wording such as "evidence", "provided data", "Phase",
+  or "the candidate".
+- If there are no matched or missing qualifications (or education fields),
+  simply do not mention them. Never say that none were provided or recorded.
+- Refer to the match score, if at all, as a whole number out of 100.
+
 Return only the requested structured output.
 """
 

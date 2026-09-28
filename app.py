@@ -930,12 +930,16 @@ with tab_chat:
         # Display previous messages
         # -------------------------------------------------------------------
 
+        # Conversation area: every message (old and new) is drawn INSIDE
+        # this container, which sits above the input box.
+        chat_area = st.container()
+
         for turn in st.session_state.get(
             "chat_display",
             [],
         ):
 
-            with st.chat_message(
+            with chat_area.chat_message(
                 turn["role"]
             ):
 
@@ -1024,7 +1028,7 @@ with tab_chat:
                     )
 
 
-                    with st.chat_message(
+                    with chat_area.chat_message(
                         "user"
                     ):
 
@@ -1033,7 +1037,7 @@ with tab_chat:
                         )
 
 
-                    with st.chat_message(
+                    with chat_area.chat_message(
                         "assistant"
                     ):
 

@@ -67,7 +67,13 @@ Writing style for the "why_match" text (it is shown directly to the candidate):
   or "the candidate".
 - If there are no matched or missing qualifications (or education fields),
   simply do not mention them. Never say that none were provided or recorded.
-- Refer to the match score, if at all, as a whole number out of 100.
+- If you mention the match score, describe it only as a match score out of 100.
+  Never describe it as a probability, chance, likelihood of getting the job,
+  or likelihood of being hired.
+- When explaining missing education fields, do not describe the candidate
+  as "currently studying" or imply that they are enrolled in a program.
+  State only that the listed educational background does not explicitly
+  include the required field.
 
 Return only the requested structured output.
 """
@@ -80,7 +86,7 @@ def build_job_prompt(evidence: dict) -> str:
 def evidence_from_phase6_job(job: dict) -> dict:
     return {
         "job_id": job["job_id"], "title": job["title"], "company": job["company"],
-        "location": job["location"], "job_description": job["job_description"],
+        "location": job["location"], 
         "match_score": job["match_score"], "scoring_confidence": job["scoring_confidence"],
         "matched_core_skills": job["matched_core_skills"], "missing_core_skills": job["missing_core_skills"],
         "matched_qualifications": job["matched_qualifications"], "missing_qualifications": job["missing_qualifications"],

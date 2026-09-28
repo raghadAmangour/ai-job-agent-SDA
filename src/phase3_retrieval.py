@@ -45,10 +45,30 @@ def check_vectors(vectors: np.ndarray, expected_dim: int, label: str = "vectors"
 
 def retrieve_jobs_for_candidate(jobs_df: pd.DataFrame, job_vectors: np.ndarray,
                                  candidate_vector: np.ndarray, top_k: int,
-                                 min_similarity: Optional[float] = None) -> pd.DataFrame:
-    """Phase 3 PATH B — top-K jobs for one live candidate."""
+                                 min_similarity: Optional[float] = None,
+                                 allowed_countries: Optional[list] = None) -> pd.DataFrame:
+    """Phase 3 PATH B — top-K jobs for one live candidate.
+
+    If `allowed_countries` is given, the search is restricted to jobs in those
+    countries BEFORE taking the top-K. Otherwise the global top-K can be
+    dominated by one country (e.g. US data-science postings), leaving almost
+    nothing after Phase 4's country filter.
+    """
+    from .phase4_filtering import mask_country
+
     candidate_vector = check_vectors(candidate_vector, job_vectors.shape[1], "candidate_embedding")[0]
-    top_idx, top_sims = retrieve_top_k(candidate_vector, job_vectors, top_k, min_similarity)
+
+    positions = None
+    if allowed_countries:
+        keep = mask_country(jobs_df, allowed_countries)
+        if keep.any():
+            positions = np.flatnonzero(keep)
+
+    if positions is not None:
+        local_idx, top_sims = retrieve_top_k(candidate_vector, job_vectors[positions], top_k, min_similarity)
+        top_idx = positions[local_idx]
+    else:
+        top_idx, top_sims = retrieve_top_k(candidate_vector, job_vectors, top_k, min_similarity)
 
     results = jobs_df.iloc[top_idx].copy()
     results.insert(0, "rank", range(1, len(results) + 1))

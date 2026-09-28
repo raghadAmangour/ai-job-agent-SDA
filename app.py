@@ -30,7 +30,7 @@ from src.phase8_agent import (
     check_grounding,
     SYSTEM_PROMPT_TEMPLATE,
 )
-from src.usage_tracker import new_usage_state, estimate_cost_usd, total_tokens
+from src.usage_tracker import new_usage_state
 
 
 # ---------------------------------------------------------------------------
@@ -778,53 +778,6 @@ with tab_match:
             f"for {profile.get('most_recent_title', 'your profile')}."
         )
 
-        # ---------------------------------------------------------------
-        # Token usage / cost — this is where the output lives.
-        # Click the expander below to open it.
-        # ---------------------------------------------------------------
-        run_usage = st.session_state.get("usage_state")
-
-        if run_usage:
-
-            run_cost = estimate_cost_usd(
-                run_usage,
-                config.EMBEDDING_MODEL,
-                config.EXTRACTION_MODEL,
-            )
-
-            with st.expander("📊 Token Usage", expanded=False):
-
-                u1, u2, u3, u4 = st.columns(4)
-
-                u1.metric(
-                    "LLM Input Tokens",
-                    f"{run_usage['llm_input_tokens']:,}",
-                )
-
-                u2.metric(
-                    "LLM Output Tokens",
-                    f"{run_usage['llm_output_tokens']:,}",
-                )
-
-                u3.metric(
-                    "Embedding Tokens",
-                    f"{run_usage['embedding_tokens']:,}",
-                )
-
-                u4.metric(
-                    "Total Tokens",
-                    f"{total_tokens(run_usage):,}",
-                )
-
-                st.caption(
-                    f"Calls per phase: {run_usage['calls']} — "
-                    f"Estimated cost: ${run_cost:.4f} "
-                    f"(official {config.EXTRACTION_MODEL} short-context "
-                    f"pricing: $0.20 / $1.20 per 1M input/output tokens, "
-                    f"{config.EMBEDDING_MODEL}: $0.02 per 1M tokens)."
-                )
-
-
         with st.expander(
             "📋 Filtering Summary"
         ):
@@ -915,26 +868,6 @@ with tab_match:
                         )
                         or "—"
                     )
-
-
-                if job.get(
-                    "learning_areas"
-                ):
-
-                    with st.expander(
-                        "💡 Development Suggestions"
-                    ):
-
-                        for la in job[
-                            "learning_areas"
-                        ]:
-
-                            st.write(
-                                f"- "
-                                f"{la['missing_skill']}"
-                                f" → "
-                                f"{la['learning_area']}"
-                            )
 
 
                 if job.get("url"):

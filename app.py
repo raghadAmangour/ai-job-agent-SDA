@@ -53,6 +53,10 @@ st.set_page_config(
 
 MAX_CHAT_TURNS_PER_SESSION = 12
 
+# Presentation-level relevance cutoff: jobs sharing (almost) no core skills
+# with the candidate are hidden from the results.
+MIN_CORE_SKILL_SCORE = 20
+
 
 # ---------------------------------------------------------------------------
 # Cached resources
@@ -504,6 +508,11 @@ with tab_match:
             job_vectors,
             candidate_vector,
             config.RETRIEVAL_TOP_K,
+            allowed_countries=(
+                None
+                if willing_to_relocate
+                else preferences["desired_countries"]
+            ),
         )
 
 
@@ -557,6 +566,36 @@ with tab_match:
             candidate_profile,
             idf_by_skill,
         )
+
+
+        # Hide jobs with almost no skill overlap and order the rest by the
+        # score shown on the cards (keeps the list and the chat consistent).
+        relevant_df = matched_df[
+            matched_df["core_skills_score"].fillna(0)
+            >= MIN_CORE_SKILL_SCORE
+        ]
+
+        if len(relevant_df) >= 3:
+
+            matched_df = (
+                relevant_df
+                .sort_values(
+                    ["match_score", "objective_rank_score"],
+                    ascending=[False, False],
+                    kind="mergesort",
+                )
+                .reset_index(drop=True)
+            )
+
+            matched_df["phase5_rank"] = range(
+                1,
+                len(matched_df) + 1,
+            )
+
+            matched_df["is_phase6_candidate"] = (
+                matched_df["phase5_rank"]
+                <= config.PHASE6_POOL_SIZE
+            )
 
 
         # -------------------------------------------------------------------

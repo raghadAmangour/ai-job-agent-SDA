@@ -67,13 +67,20 @@ Writing style for the "why_match" text (it is shown directly to the candidate):
   or "the candidate".
 - If there are no matched or missing qualifications (or education fields),
   simply do not mention them. Never say that none were provided or recorded.
-- If you mention the match score, describe it only as a match score out of 100.
-  Never describe it as a probability, chance, likelihood of getting the job,
-  or likelihood of being hired.
-- When explaining missing education fields, do not describe the candidate
-  as "currently studying" or imply that they are enrolled in a program.
-  State only that the listed educational background does not explicitly
-  include the required field.
+- Do not mention the match score in the "why_match" text. The match score is
+  already displayed separately in the user interface.
+- Never describe the match score as a probability, chance, likelihood of
+  getting the job, or likelihood of being hired.
+- When explaining education requirements, do not describe the candidate as
+  "currently studying", "currently enrolled", "pursuing a degree", or any
+  similar phrase unless the candidate's provided educational information
+  explicitly states this.
+- Do not infer current enrollment, ongoing study, or a degree in progress
+  from dates, education level, graduation year, or missing information.
+- If a job requires current study or enrollment and this is not explicitly
+  stated in the candidate's educational information, state only that this
+  requirement is not explicitly included in the candidate's listed
+  educational background.
 
 Return only the requested structured output.
 """

@@ -400,7 +400,11 @@ These preferences are primarily used during the filtering and ranking stages.
 ```text
 ai-job-agent-SDA/
 │
-├── app.py
+├── data/
+│   ├── jobs_prepared.parquet
+│   ├── job_embeddings.npy
+│   ├── job_ids.npy
+│   └── skill_vocabulary.parquet
 │
 ├── src/
 │   ├── config.py
@@ -414,14 +418,21 @@ ai-job-agent-SDA/
 │   ├── phase7_explain.py
 │   └── phase8_agent.py
 │
-├── data/
-│   ├── jobs_prepared.parquet
-│   ├── job_embeddings.npy
-│   ├── job_ids.npy
-│   └── skill_vocabulary.parquet
+├── notebooks/
+│   ├── Phase1_Job_Data_Preparation_Final.ipynb
+│   ├── Phase2_Candidate_Profile.ipynb
+│   ├── Phase3_Embedding_Retrieval.ipynb
+│   ├── Phase4_Hard_Filtering.ipynb
+│   ├── Phase5_Candidate_Matching.ipynb
+│   ├── Phase6_CrossEncoder_Reranking.ipynb
+│   ├── Phase7.ipynb
+│   ├── Phase8_Agent.ipynb
+│   └── Phase9.ipynb
 │
 ├── .streamlit/
 │   └── secrets.toml.example
+│
+├── app.py
 │
 ├── requirements.txt
 └── README.md

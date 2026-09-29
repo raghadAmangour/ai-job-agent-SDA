@@ -1,103 +1,98 @@
-# 🤖 AI Job Agent
+# AI Job Agent
 
-An AI-powered job matching application that helps candidates discover relevant job opportunities by combining **LLM-based profile extraction, semantic search, rule-based filtering, deterministic matching, cross-encoder reranking, and an interactive AI agent**.
+An AI-powered job matching assistant that analyzes a candidate's resume, retrieves relevant job opportunities, applies hard eligibility filters, ranks the remaining jobs, explains the match, and provides an interactive AI career assistant.
 
-The project takes the original Phase 1–8 pipeline developed in Google Colab notebooks and turns it into a single **Streamlit web application** where a candidate can upload a resume, specify job preferences, receive ranked job matches, understand why each job was recommended, and ask questions about the results.
-
----
-
-## 🎯 Project Idea
-
-Many job-search systems rely heavily on keyword matching, which can miss semantically similar skills and experience described using different terminology.
-
-For example, a candidate may have experience in:
-
-> Machine Learning, Python, SQL, and Data Analysis
-
-while a job description may describe similar requirements using different wording.
-
-AI Job Agent combines multiple matching techniques to understand both the **candidate** and the **job description** more effectively.
-
-The application answers questions such as:
-
-* Which jobs are relevant to my background?
-* Do I meet the requirements?
-* Which skills do I already have?
-* Which skills am I missing?
-* Why was a specific job recommended?
-* What should I learn to become a stronger candidate?
-* Which of my matched jobs is more relevant?
-* What jobs are available based on my preferences?
+The project combines semantic retrieval, rule-based filtering, deterministic candidate-job matching, cross-encoder reranking, grounded job explanations, and an interactive AI agent.
 
 ---
 
-# 🔄 How It Works
+## Project Idea
 
-The application follows a multi-stage pipeline:
+Finding suitable job opportunities can be time-consuming because a candidate needs to consider many factors at the same time, including:
+
+* Skills
+* Experience
+* Education
+* Qualifications
+* Location
+* Work arrangement
+* Employment type
+* Nationality
+* Salary expectations
+
+AI Job Agent automates this process through a multi-phase pipeline.
+
+The system does not rely only on semantic similarity. It combines **semantic retrieval, explicit eligibility filtering, structured matching, reranking, and grounded explanations** to produce more useful and transparent job recommendations.
+
+---
+
+## How It Works
+
+The application follows this pipeline:
 
 ```text
-                    Candidate Resume
-                           │
-                           ▼
-                 ┌─────────────────────┐
-                 │ Phase 2             │
-                 │ Candidate Profile   │
-                 │ + Embedding         │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Phase 3             │
-                 │ Semantic Retrieval  │
-                 │ Embedding Search    │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Phase 4             │
-                 │ Hard Filtering      │
-                 │ Preferences         │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Phase 5             │
-                 │ Match Scoring       │
-                 │ + Skill Analysis    │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Phase 6             │
-                 │ Semantic Reranking  │
-                 │ Cross-Encoder       │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Phase 7             │
-                 │ Job Explanations    │
-                 │ + Evidence Checks   │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │ Phase 8             │
-                 │ AI Chat Agent       │
-                 └─────────────────────┘
+Candidate Resume
+       │
+       ▼
+Phase 2 — Candidate Profile
+       │
+       ▼
+Phase 3 — Embedding Retrieval
+       │
+       ▼
+Phase 4 — Hard Filtering
+       │
+       ▼
+Phase 5 — Candidate Matching
+       │
+       ▼
+Phase 6 — Cross-Encoder Reranking
+       │
+       ▼
+Phase 7 — Job Explanations
+       │
+       ▼
+Phase 8 — AI Agent
+       │
+       ▼
+Interactive Job Search & Career Assistance
 ```
 
-Each phase has a different responsibility.
+**Phase 1** prepares the job dataset and precomputes job embeddings before the application is used.
+
+**Phase 9** evaluates the behavior of the Phase 8 agent and is used for project evaluation rather than the production application pipeline.
 
 ---
 
-# 🧩 Pipeline
+# Pipeline
 
 ## Phase 1 — Job Data Preparation
 
-Phase 1 is responsible for preparing the job corpus used by the application.
+Phase 1 prepares the raw job dataset for the rest of the pipeline.
 
-It is **not executed inside the Streamlit application**. Instead, the corpus is prepared offline and the resulting application-consumed files are stored in:
+The process includes:
+
+* Cleaning and normalizing job data
+* Structured extraction of job attributes
+* Normalizing skills
+* Preparing job descriptions
+* Creating the skill vocabulary
+* Generating job embeddings
+* Saving reusable outputs for later phases
+
+### Current Dataset
+
+The current prepared dataset contains:
+
+* **9,619 jobs**
+* **57 columns**
+* **1,536-dimensional job embeddings**
+* **35,890 normalized skills**
+* **100% successful structured extraction**
+
+### Phase 1 Outputs
+
+The application uses the following prepared files:
 
 ```text
 data/
@@ -107,295 +102,324 @@ data/
 └── skill_vocabulary.parquet
 ```
 
-The current Phase 1 dataset contains:
-
-* **9,619 job postings**
-* **57 columns**
-* **1,536-dimensional job embeddings**
-* **35,890 skills in the normalized skill vocabulary**
-* **100% successful structured extraction in the current run**
-
-Phase 1 is independent of any **individual candidate or user query**. It uses multiple fixed job-search anchors to build a broad, reusable job corpus across different domains.
-
-The pipeline is:
-
-```text
-Multi-anchor fetch
-        ↓
-Text normalization
-        ↓
-Language detection
-        ↓
-Spam / aggregator filtering
-        ↓
-Exact + content duplicate removal
-        ↓
-Near-duplicate detection
-        ↓
-Location normalization
-        ↓
-Date / freshness handling
-        ↓
-Quality gate
-        ↓
-LLM structured extraction
-        ↓
-Skill normalization
-        ↓
-Quality assurance
-        ↓
-Final dataset + embeddings
-```
-
-The Phase 1 notebook uses multiple anchors covering areas such as:
-
-* Data / technology
-* Business / operations
-* Engineering and other professional domains
-
-The prepared corpus includes normalized job text, structured job attributes, normalized skills, location information, employment information, experience and education fields, and other features used by later phases.
-
-The job embeddings are stored separately from the structured job data and are aligned with `job_ids.npy`.
-
-Phase 1 also generates supporting files for quality review and reproducibility:
-
-```text
-rejected_jobs.parquet
-run_metadata.json
-DATA_DICTIONARY.md
-```
-
-These supporting files document rejected records, run configuration and counts, and the prepared dataset schema.
-
-To update the job corpus, Phase 1 can be run separately and the application-consumed files can then replace the corresponding files inside `data/`.
+These files allow the application to use the prepared job data without repeating the full preprocessing and embedding process every time the application starts.
 
 ---
 
 ## Phase 2 — Candidate Profile
 
-The candidate uploads a resume in:
+Phase 2 processes the candidate's resume and converts it into a structured candidate profile.
+
+### Supported Resume Formats
 
 * PDF
 * DOCX
 * TXT
 * Markdown
 
-The application extracts structured information from the resume using an LLM.
+The system extracts information such as:
 
-The resulting candidate profile contains information extracted from the resume, such as:
+* Most recent title
+* Previous titles
+* Hard skills
+* Soft skills
+* Tools and technologies
+* Languages
+* Qualifications
+* Experience level
+* Years of experience
+* Education level
+* Education field
+* Industries
+* Candidate preferences
 
-* Skills
-* Education
-* Experience
-* Job titles
-* Professional background
-* Other relevant candidate attributes
+The extracted information is represented using structured Pydantic schemas.
 
-The application also creates a **candidate embedding** representing the candidate's professional profile in vector space.
+The candidate profile is also converted into an embedding for semantic job retrieval.
 
-This embedding is later used for semantic job retrieval.
+### Candidate Embedding
+
+The candidate embedding uses:
+
+```text
+text-embedding-3-small
+```
+
+with a dimensionality of:
+
+```text
+1536
+```
 
 ---
 
-## Phase 3 — Semantic Retrieval
+## Phase 3 — Embedding Retrieval
 
-Instead of comparing the candidate against every job using simple keywords, the system uses embeddings to perform semantic retrieval.
+Phase 3 performs semantic retrieval between the candidate and the prepared job dataset.
 
-The candidate embedding is compared with the precomputed job embeddings using **cosine similarity**.
+The candidate embedding is compared against the precomputed job embeddings using cosine similarity.
 
-Conceptually:
+The system retrieves the highest-ranked candidates from the full job dataset before applying more detailed eligibility rules.
+
+### Current Configuration
 
 ```text
-Candidate Embedding
-        │
-        ▼
-Compare with job embeddings
-        │
-        ▼
-Similarity scores
-        │
-        ▼
-Top-K candidate jobs
+Retrieval Top K: 150
 ```
 
-This stage produces a smaller set of potentially relevant jobs for the next stages.
-
-The similarity calculation is performed locally using NumPy after the embeddings have been created.
+This stage is designed to reduce the search space while preserving semantically relevant opportunities for the following phases.
 
 ---
 
 ## Phase 4 — Hard Filtering
 
-Semantic similarity alone is not enough.
+Phase 4 applies explicit candidate preferences and job constraints to the retrieved jobs.
 
-A job can be semantically relevant but still violate the candidate's actual preferences.
-
-For example:
-
-```text
-Candidate:
-Country: Saudi Arabia
-City: Riyadh
-Work Arrangement: Remote
-Employment Type: Full-time
-Salary: 8,000–12,000 SAR
-```
-
-The application applies explicit constraints such as:
+The filtering process considers:
 
 * Country
 * City
-* Relocation preference
+* Willingness to relocate
 * Work arrangement
 * Employment type
+* Education level
 * Nationality
-* Salary range
+* Salary expectations
 
-This stage removes jobs that do not satisfy the relevant constraints.
+Examples of filtering behavior include:
 
-The filtering is intentionally separate from semantic similarity so that user-defined requirements are treated as explicit constraints rather than being left entirely to an AI model.
+* If the candidate is willing to relocate, country and city restrictions can be skipped.
+* Work arrangement is enforced when the job's work arrangement has been reliably identified.
+* Education levels follow a defined hierarchy.
+* Nationality requirements are handled explicitly.
+* Salary filtering considers salary overlap and avoids rejecting jobs when salary or currency information is unavailable.
+
+The goal of this phase is to remove jobs that do not satisfy important explicit constraints before detailed candidate-job scoring.
 
 ---
 
-## Phase 5 — Candidate–Job Matching
+## Phase 5 — Candidate Matching
 
-The remaining jobs are evaluated against the candidate profile using a deterministic matching process.
+Phase 5 performs structured candidate-job matching on the jobs that survive the hard filters.
 
-The system evaluates factors such as:
+The matching process evaluates multiple criteria:
 
-* Skills
+* Core skills
+* Languages
+* Experience fit
+* Education field
 * Qualifications
-* Education
-* Other structured candidate/job attributes
 
-The result is an explainable **Match Score from 0 to 100**.
+The system produces a structured matching result including:
 
-The system also identifies relevant skill information, including:
+* Match score
+* Objective ranking score
+* Scoring confidence
+* Matched skills
+* Missing skills
+* Matched qualifications
+* Missing qualifications
+* Education matching information
 
-```text
-Matching Skills
-Missing Skills
-```
-
-This provides a structured view of how the candidate compares with each job.
-
-No embedding model or LLM is required for the core scoring calculation in this phase.
+The match score is a **requirement-coverage score**, not a probability of getting hired.
 
 ---
 
-## Phase 6 — Semantic Reranking
+## Phase 6 — Cross-Encoder Reranking
 
-An optional Cross-Encoder reranker is used to further evaluate and reorder the shortlisted jobs based on candidate–job relevance.
+Phase 6 performs a second ranking stage using a cross-encoder reranker.
 
-The application uses:
+### Model
 
 ```text
-Alibaba-NLP/gte-multilingual-reranker-base
+cross-encoder/ms-marco-MiniLM-L-6-v2
 ```
 
-The reranker receives the candidate and job information and evaluates their semantic relationship more directly.
+The model was selected because the resume and job-description text used by the application is English and the model provides a lightweight reranking option suitable for the Streamlit deployment environment.
 
-The result is used to reorder the shortlisted jobs before generating the final explanations.
+### Runtime Configuration
 
-This stage is optional in the Streamlit interface:
+The project uses:
 
-> **Use semantic reranking**
+```text
+Transformers: 4.53.3
+```
 
-Users can disable it if they need faster execution or if the deployment environment has limited resources.
+The Transformers version is intentionally pinned to the tested Phase 6 runtime.
+
+### Configuration
+
+```text
+Maximum pair tokens: 512
+Final top jobs: 20
+Initial batch size: 8
+```
+
+The reranker evaluates candidate-job text pairs and produces a refined ranking of the jobs that survived the earlier stages.
 
 ---
 
 ## Phase 7 — Job Explanations
 
-After the final jobs have been selected, the application generates a human-readable explanation for each result using an LLM.
+Phase 7 generates grounded explanations for the final matched jobs.
 
-The explanation is based on structured evidence already produced by the matching pipeline.
+For each job, the system can provide:
 
-For example:
+* Why the job matches the candidate
+* Matched skills
+* Missing skills
+* Matched qualifications
+* Missing qualifications
+* Matched education
+* Missing education
+* Suggested learning areas
+
+The explanations are generated from structured matching information rather than asking the language model to independently determine whether a job is suitable.
+
+This helps keep the explanations tied to the actual matching results.
+
+---
+
+## Phase 8 — AI Agent
+
+Phase 8 provides an interactive conversational agent on top of the previously computed results.
+
+The agent can help the candidate with tasks such as:
+
+* Viewing top matched jobs
+* Understanding why a job matches
+* Identifying missing skills
+* Creating an improvement plan
+* Preparing interview questions
+* Comparing job information
+* Answering questions about the available results
+
+The agent uses local Python tools to access the previously generated results.
+
+### Grounding Rules
+
+The agent is instructed to:
+
+* Retrieve job information before making factual claims about a specific job.
+* Never invent a `job_id`.
+* Never invent skills, qualifications, or education requirements.
+* Explain limitations when requested information is unavailable.
+* Avoid presenting a match score as a hiring probability.
+* Avoid making unsupported guarantees.
+* Avoid claiming that candidate preferences were changed when they require rerunning earlier phases.
+* Respond in Arabic or English according to the candidate's language.
+* Base job explanations on the Phase 7 output.
+* Present differences between jobs factually rather than making an overall judgment about which job is better.
+
+The agent uses:
 
 ```text
-Why this job matches
-
-Matching Skills:
-✓ Machine Learning
-✓ Python
-
-Missing Skills:
-✗ Leadership
-✗ Project Management
-
-Development Suggestions:
-- Strengthen leadership experience
-- Build project management experience
+LangGraph
+LangChain
+OpenAI API
+Pydantic
 ```
-
-The explanation stage includes validation to reduce unsupported claims and keep the explanation grounded in the available candidate/job evidence.
 
 ---
 
-## Phase 8 — AI Chat Agent
+# Phase 9 — Evaluation
 
-The final stage provides an interactive AI assistant.
+Phase 9 evaluates whether the Phase 8 agent behaves according to its grounding and system-prompt rules.
 
-Instead of searching the entire job database again, the agent uses **precomputed results and local Python tools**.
+It is an **evaluation phase**, not part of the production Streamlit pipeline.
 
-The agent can answer questions such as:
+### Evaluation Goals
+
+The evaluation checks whether the agent:
+
+* Selects the appropriate tool for different user requests.
+* Does not invent jobs or job IDs.
+* Does not introduce unsupported hiring probabilities or guarantees.
+* Handles invalid job IDs correctly.
+* Handles requests outside the available capabilities gracefully.
+* Handles ambiguous requests.
+* Handles requests when no job data is loaded.
+
+### Automated Checks
+
+The evaluation automatically checks:
+
+1. **Tool Selection**
+
+   Whether the expected tool was called for each scripted prompt.
+
+2. **Job ID Grounding**
+
+   Whether job IDs mentioned in the response correspond to known jobs in the loaded Phase 7 data.
+
+3. **Forbidden Phrasing**
+
+   Whether the response contains prohibited patterns such as unsupported hiring percentages or guarantee language.
+
+### Manual Review
+
+Some aspects require human review, particularly:
+
+* Whether the response is well written.
+* Whether the response is actually helpful.
+* Whether the explanation is grounded and understandable.
+* Whether the response handles the user's request naturally.
+
+### Scripted Test Cases
+
+The evaluation covers cases including:
+
+* Listing matched jobs
+* Explaining a specific job
+* Generating an improvement plan
+* Generating interview preparation questions
+* Handling an invalid job ID
+* Handling an out-of-scope request
+* Handling a request for a hiring percentage
+* Handling an ambiguous request
+* Handling an empty session with no loaded job data
+
+### Phase 9 Outputs
+
+The evaluation generates:
 
 ```text
-What are my top matching jobs?
-
-Why was this job recommended?
-
-Which skills am I missing?
-
-Compare these two jobs.
-
-What should I learn for this position?
-
-Show me jobs in Riyadh.
-
-What is my overall matching summary?
+evaluation_results.csv
+evaluation_report.json
+data_dictionary.txt
 ```
 
-The agent uses function calling to access structured information such as:
-
-* Top jobs
-* Job explanations
-* Skill gaps
-* Learning plans
-* Candidate summary
-* Job comparisons
-* Browseable job results
-
-This keeps the conversational layer grounded in the results produced by the matching pipeline.
+These outputs are used as supporting material for the project's final evaluation and report.
 
 ---
 
-# ⚙️ User Preferences
+# User Preferences
 
-Candidates can specify their preferences before running the analysis.
+Before running the matching process, candidates can customize their job preferences.
 
-Available settings include:
+The available preferences include:
 
-| Preference          | Purpose                                 |
-| ------------------- | --------------------------------------- |
-| Desired countries   | Filter jobs by country                  |
-| Desired cities      | Filter jobs by city                     |
-| Willing to relocate | Relax location constraints              |
-| Work arrangement    | Remote / Hybrid / On-site               |
-| Employment type     | Full-time / Part-time / Contract / etc. |
-| Nationality         | Match nationality requirements          |
-| Minimum salary      | Define minimum salary expectation       |
-| Maximum salary      | Define maximum salary expectation       |
-| Salary currency     | Specify the salary currency             |
-| Semantic reranking  | Enable/disable Cross-Encoder reranking  |
-| Final jobs          | Number of jobs displayed                |
+| Preference          | Description                                                             |
+| ------------------- | ----------------------------------------------------------------------- |
+| Country             | Preferred job country                                                   |
+| City                | Preferred job city                                                      |
+| Work Arrangement    | On-site, Remote, Hybrid, or Not Specified                               |
+| Employment Type     | Full-time, Part-time, Contract, Internship, Temporary, or Not Specified |
+| Willing to Relocate | Whether the candidate is open to relocation                             |
+| Nationality         | Candidate nationality when relevant to job requirements                 |
+| Expected Salary     | Minimum and maximum expected salary                                     |
+| Salary Currency     | Expected salary currency                                                |
+| Salary Period       | Hour, day, month, or year                                               |
+| Availability        | Candidate availability                                                  |
+| Notes               | Additional preferences                                                  |
 
-These preferences are primarily used during the filtering and ranking stages.
+Semantic reranking can also be enabled to refine the final ranking.
 
 ---
 
-# 🏗️ Project Structure
+# Project Structure
+
+The repository keeps the working project structure used by the application:
 
 ```text
 ai-job-agent-SDA/
@@ -429,112 +453,330 @@ ai-job-agent-SDA/
 │   ├── Phase8_Agent.ipynb
 │   └── Phase9.ipynb
 │
+├── assets/
+│   └── logo.png
+│
 ├── .streamlit/
 │   └── secrets.toml.example
 │
 ├── app.py
-│
 ├── requirements.txt
 └── README.md
 ```
 
+### Repository Components
+
+* `app.py` — Streamlit application entry point.
+* `src/` — Python modules used by the application pipeline.
+* `data/` — Prepared job data and precomputed embeddings required by the application.
+* `notebooks/` — Development and evaluation notebooks for the individual project phases.
+* `assets/` — Application visual assets, including the project logo.
+* `.streamlit/secrets.toml.example` — Example configuration for required secrets.
+* `requirements.txt` — Python dependencies and tested runtime versions.
+* `README.md` — Project documentation.
+
+The notebooks are included for development, review, and reproducibility. They are not required for the normal Streamlit application runtime.
+
 ---
 
-# 🛠️ Technologies
+# Technologies
 
-The project combines several technologies:
+The project uses:
 
 ### Application
 
 * Streamlit
 * Python
 
-### AI / NLP
-
-* OpenAI API
-* LLM-based structured extraction
-* Text embeddings
-* Cross-Encoder reranking
-* Function calling
-
 ### Data Processing
 
 * Pandas
 * NumPy
-* Parquet
-* SQLite / structured local data where applicable
+* PyArrow
 
-### Machine Learning
+### Resume Processing
 
-* Cosine similarity
-* Embedding retrieval
-* Deterministic matching
-* Cross-Encoder semantic reranking
-* Skill-gap analysis
+* PDFPlumber
+* Python-DOCX
 
-### Deployment
+### LLM and AI
 
-* GitHub
-* Streamlit Community Cloud
+* OpenAI API
+* LangChain
+* LangGraph
+* Pydantic
 
----
+### Retrieval and Embeddings
 
-# 📊 Current Job Dataset
+* OpenAI `text-embedding-3-small`
+* NumPy-based cosine similarity
 
-The application currently uses a prepared Phase 1 dataset containing:
+### Reranking
 
-**9,619 job postings**
-
-The dataset contains **57 columns**, with **1,536-dimensional precomputed embeddings** and a **35,890-entry normalized skill vocabulary**.
-
-The job database and embeddings are generated during the offline data preparation stage and are then consumed by the Streamlit application.
-
-This allows the deployed application to focus on candidate matching instead of rebuilding the entire job corpus for every user.
+* Hugging Face Transformers
+* `cross-encoder/ms-marco-MiniLM-L-6-v2`
+* PyTorch
+* Accelerate
+* Safetensors
 
 ---
 
-# 💡 Design Principles
+# Installation and Setup
 
-The project intentionally combines different approaches instead of relying on a single AI model.
+## 1. Install Dependencies
 
-### LLMs are used for:
+Create a Python environment and install the dependencies:
 
-* Candidate profile extraction
-* Job explanations
-* Conversational interaction
+```bash
+pip install -r requirements.txt
+```
 
-### Embeddings are used for:
+The project uses the following main dependencies:
 
-* Semantic candidate–job retrieval
+```text
+streamlit>=1.38
+pandas>=2.0
+numpy>=1.26,<2.0
+pyarrow>=15.0
+openai>=1.40
+pydantic>=2.6
+pdfplumber>=0.11
+python-docx>=1.1
 
-### Rule-based logic is used for:
+transformers==4.53.3
+accelerate>=1.0,<2
+safetensors>=0.4
+torch>=2.2,<3
+```
 
-* User preference filtering
-* Salary constraints
-* Location constraints
-* Employment constraints
-* Deterministic matching
-
-### Cross-Encoder is used for:
-
-* Semantic reranking of shortlisted jobs
-
-This separation makes the pipeline more structured, explainable, and easier to evaluate.
-
----
-
-# 🎯 Project Goal
-
-The goal of AI Job Agent is to provide a more structured job-search experience by combining:
-
-**Semantic understanding + explicit user preferences + explainable matching + conversational AI**
-
-Instead of simply returning jobs that contain similar keywords, the system creates a multi-stage matching process that considers both the candidate's background and their stated preferences.
+The Transformers version is intentionally pinned to the tested Phase 6 runtime.
 
 ---
 
-## 👩‍💻 Project
+## 2. Configure the OpenAI API Key
 
-**AI Job Agent — SDA / WeCloudData**
+Create the Streamlit secrets file:
 
-Built as a multi-phase AI and data project integrating information retrieval, NLP, machine learning, deterministic scoring, and conversational AI into a single deployed application.
+```text
+.streamlit/secrets.toml
+```
+
+based on:
+
+```text
+.streamlit/secrets.toml.example
+```
+
+The example file contains:
+
+```toml
+OPENAI_API_KEY = "sk-..."
+```
+
+Replace the placeholder with a valid OpenAI API key.
+
+**Do not commit the real `secrets.toml` file or expose the API key publicly.**
+
+---
+
+## 3. Run the Application
+
+From the project root:
+
+```bash
+streamlit run app.py
+```
+
+The application will start locally and provide the Streamlit interface.
+
+---
+
+# Application Data
+
+The Streamlit application expects the prepared data files inside the `data/` directory:
+
+```text
+data/
+├── jobs_prepared.parquet
+├── job_embeddings.npy
+├── job_ids.npy
+└── skill_vocabulary.parquet
+```
+
+The application uses these files to load the prepared job dataset and precomputed embeddings.
+
+The data paths are configured in:
+
+```text
+src/config.py
+```
+
+The current data directory is:
+
+```python
+DATA_DIR = "data"
+```
+
+---
+
+# API Key and Privacy
+
+The project requires an OpenAI API key for LLM-powered functionality.
+
+The API key should be stored locally in Streamlit secrets rather than inside source code.
+
+The repository should contain only:
+
+```text
+.streamlit/secrets.toml.example
+```
+
+and should **not** contain the real:
+
+```text
+.streamlit/secrets.toml
+```
+
+or any other file containing a private API key.
+
+---
+
+# Dataset Source
+
+The job dataset used in the project was obtained from **Open Jobs by Elliott Dehn**.
+
+**Source:** GitHub — Open Jobs by Elliott Dehn
+
+The original dataset was processed, cleaned, and transformed during Phase 1 before being used by the application.
+
+The prepared dataset used by the project contains 9,619 jobs and 57 columns.
+
+The original dataset source should be acknowledged when redistributing or presenting the project.
+
+---
+
+# Design Principles
+
+The project was designed around the following principles:
+
+### 1. Structured Processing
+
+Important candidate and job information is represented using structured schemas rather than relying entirely on free-form text.
+
+### 2. Multi-Stage Matching
+
+The system combines multiple stages:
+
+```text
+Semantic Retrieval
+        ↓
+Hard Eligibility Filtering
+        ↓
+Structured Matching
+        ↓
+Cross-Encoder Reranking
+        ↓
+Grounded Explanation
+        ↓
+Conversational Assistance
+```
+
+### 3. Grounded AI Responses
+
+The conversational agent is instructed to rely on previously computed results and available tools rather than inventing information.
+
+### 4. Separation of Responsibilities
+
+Each phase has a specific responsibility:
+
+* Data preparation
+* Candidate extraction
+* Retrieval
+* Filtering
+* Matching
+* Reranking
+* Explanation
+* Agent interaction
+* Evaluation
+
+### 5. Reusable Precomputed Data
+
+Job embeddings and prepared job data are generated before runtime so that the application does not need to repeat the entire dataset preparation process for every user session.
+
+### 6. Evaluation and Validation
+
+The final agent is evaluated using scripted test cases and automated grounding checks, with manual review for response quality.
+
+---
+
+# Current Job Dataset
+
+The current prepared dataset used by the project contains:
+
+| Item                          |  Value |
+| ----------------------------- | -----: |
+| Jobs                          |  9,619 |
+| Columns                       |     57 |
+| Job embedding dimensions      |  1,536 |
+| Skill vocabulary              | 35,890 |
+| Structured extraction success |   100% |
+
+These values describe the current prepared dataset used during the project's development and evaluation.
+
+---
+
+# Development Notebooks
+
+The `notebooks/` directory contains the development notebooks used to build and evaluate the project phases:
+
+```text
+Phase1_Job_Data_Preparation_Final.ipynb
+Phase2_Candidate_Profile.ipynb
+Phase3_Embedding_Retrieval.ipynb
+Phase4_Hard_Filtering.ipynb
+Phase5_Candidate_Matching.ipynb
+Phase6_CrossEncoder_Reranking.ipynb
+Phase7.ipynb
+Phase8_Agent.ipynb
+Phase9.ipynb
+```
+
+The notebooks document the development process and can be used for review.
+
+The production Streamlit application uses the Python modules under `src/` rather than requiring the notebooks to run.
+
+---
+
+# Project Goal
+
+The goal of AI Job Agent is to provide a structured and transparent way for candidates to explore job opportunities based on their resume, skills, experience, education, and preferences.
+
+Instead of relying on a single similarity score, the system combines retrieval, explicit filtering, structured matching, reranking, grounded explanations, and an interactive agent to help candidates understand the available opportunities and identify areas for improvement.
+
+---
+
+# Final Project Components
+
+The final project consists of:
+
+```text
+AI Job Agent
+│
+├── Streamlit Application
+├── Prepared Job Dataset
+├── Precomputed Job Embeddings
+├── Matching Pipeline
+├── Cross-Encoder Reranker
+├── Grounded Job Explanations
+├── Interactive AI Agent
+├── Evaluation Pipeline
+└── Development Notebooks
+```
+
+---
+
+# Attribution
+
+Developed as part of the SDA / WeCloudData project.
+
+The job dataset used in the project is based on Open Jobs by Elliott Dehn.
